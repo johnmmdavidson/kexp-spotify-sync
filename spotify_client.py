@@ -11,6 +11,12 @@ from config import (
 
 class SpotifyClient:
     def __init__(self):
+        if not SPOTIFY_CLIENT_ID or not SPOTIFY_CLIENT_SECRET:
+            raise RuntimeError(
+                "Missing Spotify credentials. "
+                "Create a .env file with SPOTIFY_CLIENT_ID and SPOTIFY_CLIENT_SECRET."
+            )
+
         # Set up OAuth with required scopes
         self.scope = "playlist-modify-public playlist-modify-private playlist-read-private user-read-private"
 
