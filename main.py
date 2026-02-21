@@ -5,7 +5,7 @@ from typing import Dict
 import pytz
 from kexp_client import KexpClient
 from spotify_client import SpotifyClient
-from config import LOG_FILE, SHOW_END_HOUR
+from config import LOG_FILE, SHOW_END_HOUR, SHOW_NAME
 
 
 class PlaylistSyncer:
@@ -30,8 +30,9 @@ class PlaylistSyncer:
 
         # Create playlist if not provided
         if not playlist_id:
-            playlist_name = f"KEXP {show_date.strftime('%Y-%m-%d')}"
-            playlist_description = f"Songs from KEXP show on {show_date.strftime('%B %d, %Y')}"
+            date_str = show_date.strftime('%B %d, %Y').replace(' 0', ' ')
+            playlist_name = f"{SHOW_NAME} (KEXP) - {date_str}"
+            playlist_description = f"Playlist from {date_str} edition of {SHOW_NAME} on KEXP"
             try:
                 playlist_id = self.spotify_client.create_playlist(playlist_name, playlist_description)
             except Exception as e:
