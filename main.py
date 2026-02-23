@@ -313,8 +313,13 @@ def direct_mode(args):
         best = episodes[0]
     elif args.date:
         # Find the episode closest to the given date
-        target = datetime.strptime(args.date, "%Y-%m-%d")
-        episodes, _ = shows.get_episodes(program["id"], limit=50)
+        try:
+            target = datetime.strptime(args.date, "%Y-%m-%d")
+        except ValueError:
+            print(f"Invalid date format: '{args.date}' (use YYYY-MM-DD)")
+            sys.exit(1)
+        # Fetch a large window so older dates still match correctly
+        episodes, _ = shows.get_episodes(program["id"], limit=200)
         if not episodes:
             print("No episodes found for this program.")
             sys.exit(1)
@@ -332,6 +337,10 @@ def direct_mode(args):
         if not best:
             print("Could not find a matching episode.")
             sys.exit(1)
+        # Warn if the closest match is far from the requested date (>7 days)
+        if best_diff > 7 * 86400:
+            matched_date = format_episode_date(best["start_time"])
+            print(f"Warning: no episode near {args.date}, closest is {matched_date}")
     else:
         print("Direct mode requires --latest or --date.")
         sys.exit(1)
