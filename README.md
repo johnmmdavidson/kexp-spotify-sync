@@ -18,7 +18,7 @@ Turn any [KEXP](https://kexp.org) radio show into a Spotify playlist. Browse pro
 ### Install
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/kexp-spotify-sync.git
+git clone https://github.com/johnmmdavidson/kexp-spotify-sync.git
 cd kexp-spotify-sync
 python -m venv venv
 source venv/bin/activate
