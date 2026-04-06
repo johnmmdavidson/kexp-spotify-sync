@@ -19,6 +19,7 @@ class PlaylistSyncer:
 
     def sync_show_to_playlist(self, show_id: int, program_name: str,
                               show_date: str, host_names: str = "",
+                              tagline: str = "",
                               playlist_id: str = None, dry_run: bool = False) -> dict:
         """Fetch songs for a show episode and add them to a Spotify playlist."""
         mode_label = "[DRY RUN] " if dry_run else ""
@@ -35,8 +36,12 @@ class PlaylistSyncer:
 
         if not playlist_id:
             playlist_name = f"{program_name} (KEXP) - {show_date}"
-            host_part = f" with {host_names}" if host_names else ""
-            playlist_description = f"Playlist from {show_date} edition of {program_name}{host_part} on KEXP"
+            parts = []
+            if host_names:
+                parts.append(f"Hosted by {host_names}")
+            if tagline:
+                parts.append(tagline)
+            playlist_description = " · ".join(parts)[:300] if parts else ""
             try:
                 playlist_id = self.spotify_client.create_playlist(playlist_name, playlist_description)
             except Exception as e:
@@ -286,6 +291,7 @@ def interactive_mode(dry_run: bool = False):
         program_name=program["name"],
         show_date=show_date,
         host_names=hosts,
+        tagline=episode.get("tagline", ""),
         dry_run=dry_run,
     )
     return result
@@ -355,6 +361,7 @@ def direct_mode(args):
         program_name=program["name"],
         show_date=show_date,
         host_names=hosts,
+        tagline=best.get("tagline", ""),
         playlist_id=args.playlist,
         dry_run=args.dry_run,
     )
