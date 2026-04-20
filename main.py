@@ -41,7 +41,9 @@ class PlaylistSyncer:
                 parts.append(f"Hosted by {host_names}")
             if tagline:
                 parts.append(tagline)
-            playlist_description = " · ".join(parts)[:300] if parts else ""
+            raw_description = " · ".join(parts) if parts else ""
+            # Spotify rejects newlines/control chars in playlist descriptions with HTTP 400.
+            playlist_description = " ".join(raw_description.split())[:300]
             try:
                 playlist_id = self.spotify_client.create_playlist(playlist_name, playlist_description)
             except Exception as e:
