@@ -1,7 +1,7 @@
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from kexp_client import KexpClient
 from kexp_shows import KexpShows
@@ -326,8 +326,15 @@ def direct_mode(args):
         except ValueError:
             print(f"Invalid date format: '{args.date}' (use YYYY-MM-DD)")
             sys.exit(1)
-        # Fetch a large window so older dates still match correctly
-        episodes, _ = shows.get_episodes(program["id"], limit=200)
+        # Narrow server-side to a small window around the target date so we
+        # don't paginate through the entire show catalog.
+        window = timedelta(days=4)
+        episodes, _ = shows.get_episodes(
+            program["id"],
+            limit=200,
+            start_after=target - window,
+            start_before=target + window,
+        )
         if not episodes:
             print("No episodes found for this program.")
             sys.exit(1)

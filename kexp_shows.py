@@ -1,5 +1,5 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta
 
 
 class KexpShows:
@@ -36,30 +36,36 @@ class KexpShows:
         programs.sort(key=lambda p: p["name"].lower())
         return programs
 
-    def get_episodes(self, program_id: int, limit: int = 10, offset: int = 0) -> tuple[list[dict], int]:
+    def get_episodes(self, program_id: int, limit: int = 10, offset: int = 0,
+                     start_after: datetime | None = None,
+                     start_before: datetime | None = None) -> tuple[list[dict], int]:
         """Fetch recent episodes for a program, most recent first.
 
         The KEXP shows API doesn't support server-side program filtering,
-        so we paginate through all shows and filter client-side.
+        so we paginate through shows and filter client-side. When
+        start_after/start_before are provided, we narrow the server-side
+        window via start_time_after/start_time_before so we don't have to
+        scan the entire catalog.
 
         Returns (episodes, total_matched) where total_matched is the number
         found so far (not a global count, since we can't know that without
         scanning all shows).
         """
         matched = []
-        skipped = 0
         api_offset = 0
         batch_size = 200
         max_scanned = 5000  # safety limit
 
+        params_base = {"ordering": "-start_time", "limit": batch_size}
+        if start_after is not None:
+            params_base["start_time_after"] = start_after.strftime("%Y-%m-%dT%H:%M:%SZ")
+        if start_before is not None:
+            params_base["start_time_before"] = start_before.strftime("%Y-%m-%dT%H:%M:%SZ")
+
         while len(matched) < offset + limit and api_offset < max_scanned:
             response = requests.get(
                 f"{self.BASE_URL}/shows/",
-                params={
-                    "ordering": "-start_time",
-                    "limit": batch_size,
-                    "offset": api_offset,
-                },
+                params={**params_base, "offset": api_offset},
                 timeout=10
             )
             response.raise_for_status()
@@ -79,6 +85,8 @@ class KexpShows:
                         "tagline": show.get("tagline", ""),
                     })
 
+            if not data.get("next"):
+                break
             api_offset += batch_size
 
         page = matched[offset:offset + limit]
